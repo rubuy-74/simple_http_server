@@ -16,7 +16,7 @@
 #include <regex.h>
 
 
-#define PORT "8080"
+// #define PORT "8080"
 #define BACKLOG 3
 #define BUFFERSIZE 1024
 #define MAXRESPONSESIZE 32768
@@ -87,7 +87,7 @@ static const struct MimeType mimeTypeList[] =
     {".zip",   "application/zip"}
  };
 
-const char *concat(char *dest, char *source) {
+void concat(char *dest, char *source) {
     int i;
 
     for(i = 0; dest[i]!='\0';i++);
@@ -152,8 +152,9 @@ int create_response(int new_socket,char *file, char *response,int *response_size
         "\r\n"
         "404 Not Found");
         *response_size += strlen(response);
-        return 0;
     }
+
+    free(header);
     return 0;
 };
 
@@ -184,9 +185,61 @@ int parse_file(int new_socket,char *raw_request,char *file){
     return 0;
 }
 
+void get_host(char *raw_request,char* host_path) {
+    char *host = (char *)malloc(BUFFERSIZE * sizeof(char));
+    host = strtok(raw_request,"\n");
+    host = strchr(strtok(NULL,"\n"),':') + 2 ;
+
+    char *host_arr[1024];
+    const char dot[2] = ".";
+    char *token;
+    int i = 0;
+
+    int status;
+    regex_t reg;
+    char *rstr = "www*";
+
+    if ((status = regcomp(&reg,rstr,REG_EXTENDED)) == - 1){
+        perror("regcomp"); exit(1);
+    }
+    status = regexec(&reg,host,0, NULL, 0);
+
+    if(status != 0){
+        host_arr[0] = "www";
+        i++;
+    }
+
+    token = strtok(host,dot);
+    
+    while(token != NULL) {
+        host_arr[i] = token;
+        i++;
+        token = strtok(NULL,dot);
+    }
+    host_arr[i] = NULL;
+
+    char *s = (char *)malloc(BUFFERSIZE * sizeof(char));
+    s[0] = '/';
+
+    int j = 0;
+
+    while(j < i - 1) {
+        strcat(s,host_arr[j]);
+        strcat(s,"/");
+        j++;
+    }
+
+
+
+    strcpy(host_path,s+1);
+
+    free(s);
+}
+
 void handler(int new_socket) {
     char *raw_request = (char *) malloc(BUFFERSIZE * sizeof(char));
     char *file = (char *) malloc(BUFFERSIZE * sizeof(char));
+    char *host_path = (char *) malloc(BUFFERSIZE * sizeof(char));
     char response[MAXRESPONSESIZE];
     int response_size = 0;
 
@@ -195,12 +248,13 @@ void handler(int new_socket) {
         perror("response"); exit(1);
     }
 
-    //printf("%s\n",raw_request);
-
     if(parse_file(new_socket,raw_request,file) == 0){
-        char response[MAXRESPONSESIZE];
+        get_host(raw_request,host_path);
 
-        printf("%s\n",file);
+        strcat(host_path,file);
+        strcpy(file,host_path);
+
+        char response[MAXRESPONSESIZE];
 
         if((create_response(new_socket,file,response,&response_size)) == -1){
             printf("error while creating response");
@@ -209,8 +263,6 @@ void handler(int new_socket) {
         printf("NOT VALID REQUEST:%s\n",raw_request);
     }
 
-
-    printf("%s\n",response);
     send(new_socket,response,response_size,0);
 
     free(raw_request);
@@ -240,7 +292,7 @@ int main(int argc,char const* argv[]){
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // FILL MY IP
 
-    if(getaddrinfo(NULL,PORT,&hints,&servinfo) != 0){
+    if(getaddrinfo(NULL,argv[1],&hints,&servinfo) != 0){
         perror("getaddrinfo");
         exit(1);
     }
@@ -270,7 +322,7 @@ int main(int argc,char const* argv[]){
         exit(1);
     }
 
-    printf("waiting for connection on Port %s\n",PORT);
+    printf("waiting for connection on Port %s\n",argv[1]);
 
     while(1) {
         addr_length = sizeof client_addr;
