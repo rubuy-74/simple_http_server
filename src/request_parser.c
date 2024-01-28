@@ -22,7 +22,7 @@ int parse_file(char *file_path,char *start_line, char *host_line){
 }
 
 enum REQUEST_TYPE parse_start_line(char* start_line,char* file_path) {
-    char *arr[1024];
+    char *arr[LINE_SIZE];
     char *token = (char *)malloc(BUFFERSIZE * sizeof(char));
     char *string = (char *)malloc(BUFFERSIZE * sizeof(char));
     const char space[2] = " ";
@@ -81,3 +81,49 @@ uint8_t absolute_path(char *file_path) {
     return !status;
 }
 
+void split_field(char *string,char *key,char *value){
+    long i = (long)index(string,':') - (long)string;
+    strncpy(key,string,i);
+    strcpy(value,string+i + 1);
+}
+
+void parse_response(char *raw_request,char *start_line,char *host_line) {
+    struct header_field *fields = (struct header_field*) malloc (MAX_HEADER_NUM * sizeof(struct header_field));
+    char *token;
+    char *arr[LINE_SIZE];
+    char *string = (char *) malloc(BUFFERSIZE * sizeof(char));
+
+    strcpy(string,raw_request);
+    
+    token = strtok(string,"\n");
+
+    int i = 0;
+    while(token != NULL){
+        arr[i] = token;
+        printf("%ld\n",strlen(token));
+        i++;
+        token = strtok(NULL,"\n");
+    }
+    arr[i] = NULL;
+
+    strcpy(start_line,arr[0]);
+    strcpy(host_line,arr[1]);
+
+    char *key = (char *)malloc(BUFFERSIZE * sizeof(char));
+    char *value = (char *)malloc(BUFFERSIZE * sizeof(char));
+
+    int j = 2;
+    while(arr[j] != NULL) {
+        split_field(arr[j],key,value);
+        fields[j-2].key = key;
+        fields[j-2].value = value;
+        j++;
+    }
+    
+
+
+    free(string);
+    free(key);
+    free(value);
+    free(fields);
+}

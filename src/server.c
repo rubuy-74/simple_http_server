@@ -73,20 +73,6 @@ void *get_in_addr(struct sockaddr *sa) {
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int main2(int argc,char const* argv[]){
-    char *file_path = (char *) malloc(BUFFERSIZE * sizeof(char));
-    char *start_line = "GET /index.html HTTP/1.1";
-    char *host_line = "Host: example.com";
-
-    char *example_request = "GET /index.html HTTP/1.1"
-    "Host: example.com"
-    "";
-
-    // parse_file(file_path,start_line,host_line);
-
-
-}
-
 void setup_sockets(struct addrinfo *servinfo,int *server_socket, char *a){
     int opt = 1;
     struct addrinfo hints;
@@ -128,7 +114,7 @@ void setup_sockets(struct addrinfo *servinfo,int *server_socket, char *a){
     }
 }
 
-int main(int argc,char const* argv[]){
+void run(char *port) {
     int server_socket,new_socket;
     socklen_t addr_length;
     struct sockaddr_storage client_addr;
@@ -136,9 +122,9 @@ int main(int argc,char const* argv[]){
     struct addrinfo *servinfo;
     char s[INET6_ADDRSTRLEN] = {0};
 
-    setup_sockets(servinfo,&server_socket,argv[1]);
+    setup_sockets(servinfo,&server_socket,port);
 
-    printf("waiting for connection on Port %s\n",argv[1]);
+    printf("waiting for connection on Port %s\n",port);
 
     while(1) {
         addr_length = sizeof client_addr;
@@ -163,7 +149,20 @@ int main(int argc,char const* argv[]){
         pthread_join(t1,NULL);
         close(new_socket);
     }
-    return 0;
 }
 
+int main(int argc,char const* argv[]){
+    char *file_path = (char *) malloc(BUFFERSIZE * sizeof(char));
+    char *start_line =(char *) malloc(BUFFERSIZE * sizeof(char));
+    char *host_line = (char *) malloc(BUFFERSIZE * sizeof(char));
+
+    char *example_request = "GET /index.html HTTP/1.1\n"
+    "Host: example.com\n"
+    "Im crazy dog html is cringe\n";
+
+    // parse_response(example_request,start_line,host_line);
+    parse_file(file_path,start_line,host_line);
+
+    return 0;
+}
 
