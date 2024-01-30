@@ -13,4 +13,7 @@ struct MimeType {
 
 const char * get_mime_type(char *filename);
 
-int create_response(int new_socket,char *file, char *response,int *response_size);
+int create_response(int new_socket,char *path_file,int status_code, char *response,int *response_size);
+
+int create_header(int status_code,char *path_file,char *response);
+

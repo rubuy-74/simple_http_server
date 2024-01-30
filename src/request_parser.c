@@ -1,6 +1,6 @@
 #include "../include/request_parser.h"
 
-int parse_file(char *file_path,char *start_line, char *host_line){
+int parse_file(char *file_path,char *start_line, char *host_line, int *status_code){
     char *host_name = (char *) malloc(BUFFERSIZE * sizeof(char));
 
     uint8_t request_type = parse_start_line(start_line,file_path);
@@ -16,7 +16,8 @@ int parse_file(char *file_path,char *start_line, char *host_line){
         printf("HEAD REQUEST\n");
         return 0;
     } else {
-        printf("%d : ERROR\n",request_type);
+        *status_code = 400;
+        //printf("%d : ERROR\n",request_type);
         return -1;
     }
 }
@@ -81,14 +82,15 @@ uint8_t absolute_path(char *file_path) {
     return !status;
 }
 
-void split_field(char *string,char *key,char *value){
+uint8_t split_field(char *string,char *key,char *value){
     long i = (long)index(string,':') - (long)string;
+    if(i > strlen(string)) return 1;
     strncpy(key,string,i);
     strcpy(value,string+i + 1);
+    return 0;
 }
 
-void parse_response(char *raw_request,char *start_line,char *host_line) {
-    struct header_field *fields = (struct header_field*) malloc (MAX_HEADER_NUM * sizeof(struct header_field));
+void parse_request(char *raw_request,char *start_line,char *host_line,struct header_field *fields, int fields_size) {
     char *token;
     char *arr[LINE_SIZE];
     char *string = (char *) malloc(BUFFERSIZE * sizeof(char));
@@ -100,7 +102,6 @@ void parse_response(char *raw_request,char *start_line,char *host_line) {
     int i = 0;
     while(token != NULL){
         arr[i] = token;
-        printf("%ld\n",strlen(token));
         i++;
         token = strtok(NULL,"\n");
     }
@@ -113,14 +114,13 @@ void parse_response(char *raw_request,char *start_line,char *host_line) {
     char *value = (char *)malloc(BUFFERSIZE * sizeof(char));
 
     int j = 2;
-    while(arr[j] != NULL) {
-        split_field(arr[j],key,value);
-        fields[j-2].key = key;
-        fields[j-2].value = value;
+
+    while (split_field(arr[j],key,value) == 0 && arr[j] != NULL) {
+        fields[j-2].value = strdup(value);
+        fields[j-2].key = strdup(key);
         j++;
     }
-    
-
+    fields_size = j - 2;
 
     free(string);
     free(key);

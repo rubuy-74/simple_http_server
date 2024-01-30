@@ -89,6 +89,54 @@ const char * get_mime_type(char *filename) {
    return default_mimeType;
 }
 
+int create_response(int new_socket,char *path_file,int status_code, char *response, int *response_size){
+    // create_header(status_code,path_file);
+    FILE *f = fopen(path_file,"rb");
+    char *data = 0;
+    long length;
+
+
+    if(f == 0 && status_code != 400){
+        status_code = 404;
+    }
+    create_header(status_code,path_file,response);
+    if(f > 0) {
+        fseek(f,0,SEEK_END);
+        length = ftell(f);
+        fseek(f,0,SEEK_SET);
+        data = (char *) malloc(length);
+        if(data) {
+            fread(data,1,length,f);
+        }
+        fclose(f);
+
+        concat(response,data);
+    }
+    *response_size += strlen(response);
+}
+
+int create_header(int status_code,char *path_file,char *response){
+    char *header = (char *) malloc(BUFFERSIZE * sizeof(char));
+    char *status_message = (char *) malloc(BUFFERSIZE * sizeof(char));
+
+    const char *mime_type = status_code != 404 
+        ? get_mime_type(path_file) 
+        : "text/plain";
+
+    switch (status_code) {
+        case 200:
+            status_message = "OK"; break;
+        case 404:
+            status_message = "Not found"; break;
+        case 400:
+            status_message = "Bad Request"; break;
+    }
+    sprintf(header,"HTTP/1.1 %d %s\nContent-type: %s\n\n",status_code,status_message,mime_type);
+    
+    strcpy(response,header);
+}
+
+/*
 int create_response(int new_socket,char *file, char *response,int *response_size) {
     char *data = 0;
     char *header = (char *) malloc(BUFFERSIZE * sizeof(char));
@@ -131,3 +179,4 @@ int create_response(int new_socket,char *file, char *response,int *response_size
     free(header);
     return 0;
 };
+*/

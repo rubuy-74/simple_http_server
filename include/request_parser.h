@@ -11,6 +11,7 @@
 #define SOURCE_PATH "../www/"
 #define MAX_HEADER_NUM 16
 #define LINE_SIZE 2048
+#define RESPONSE_MAX_SIZE 32680
 
 enum REQUEST_TYPE {
     GET,
@@ -24,7 +25,7 @@ struct header_field {
     char *value;
 };
 
-int parse_file(char *file_path,char *start_line, char *host_line);
+int parse_file(char *file_path,char *start_line, char *host_line, int *status_code);
 
 enum REQUEST_TYPE parse_start_line(char* start_line,char* file_path);
 
@@ -34,6 +35,6 @@ uint8_t get_payload(char *file_path,char *host_name,char *host_line);
 
 uint8_t absolute_path(char *file_path);
 
-void parse_response(char *raw_request,char *start_line,char *host_line);
+void parse_request(char *raw_request,char *start_line,char *host_line,struct header_field *fields, int fields_size);
 
-void split_field(char *string,char *key,char *value);
+uint8_t split_field(char *string,char *key,char *value);

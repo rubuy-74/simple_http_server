@@ -24,46 +24,29 @@
 
 
 void handler(int new_socket) {
-    char *file_path = (char *) malloc(BUFFERSIZE * sizeof(char));
-    char *start_line = "GET /index.html HTTP/1.1";
-
-    printf("fuck off\n");
-    /*
     char *raw_request = (char *) malloc(BUFFERSIZE * sizeof(char));
-    char *file = (char *) malloc(BUFFERSIZE * sizeof(char));
-    char *host_path = (char *) malloc(BUFFERSIZE * sizeof(char));
-    char response[MAXRESPONSESIZE];
-    int response_size = 0;
+    char *file_path = (char *) malloc(BUFFERSIZE * sizeof(char));
+    char *start_line =(char *) malloc(BUFFERSIZE * sizeof(char));
+    char *host_line = (char *) malloc(BUFFERSIZE * sizeof(char));
+    char *response = (char *) malloc(RESPONSE_MAX_SIZE * sizeof(char));
+    struct header_field *fields = (struct header_field*) 
+        malloc (MAX_HEADER_NUM * sizeof(struct header_field));
+    int fields_size = 0;
 
+    int status_code = 200;
+    int response_size = 0;
 
     if(recv(new_socket,raw_request,BUFFERSIZE,0) == -1){
         perror("response"); exit(1);
     }
 
-    if(parse_file(new_socket,raw_request,file) == 0){
-        get_host(raw_request,host_path);
+    parse_request(raw_request, start_line, host_line, fields,fields_size);
 
-        strcat(host_path,file);
-        strcpy(file,host_path);
+    printf("%s\n%s\n",start_line,host_line);
 
-        char response[MAXRESPONSESIZE];
+    parse_file(file_path,start_line,host_line,&status_code);
 
-        printf("%s\n",file);
-
-        if((create_response(new_socket,file,response,&response_size)) == -1){
-            printf("error while creating response");
-        }
-    } else {
-        printf("NOT VALID REQUEST:%s\n",raw_request);
-    }
-
-    printf("%s\n",response);
-    send(new_socket,response,response_size,0);
-
-    free(raw_request);
-    free(file);
-    return;
-    */
+    create_response(new_socket,file_path,status_code,response,&response_size);
 }
 
 void *get_in_addr(struct sockaddr *sa) {
@@ -114,7 +97,7 @@ void setup_sockets(struct addrinfo *servinfo,int *server_socket, char *a){
     }
 }
 
-void run(char *port) {
+void run(const char *port) {
     int server_socket,new_socket;
     socklen_t addr_length;
     struct sockaddr_storage client_addr;
@@ -152,17 +135,7 @@ void run(char *port) {
 }
 
 int main(int argc,char const* argv[]){
-    char *file_path = (char *) malloc(BUFFERSIZE * sizeof(char));
-    char *start_line =(char *) malloc(BUFFERSIZE * sizeof(char));
-    char *host_line = (char *) malloc(BUFFERSIZE * sizeof(char));
-
-    char *example_request = "GET /index.html HTTP/1.1\n"
-    "Host: example.com\n"
-    "Im crazy dog html is cringe\n";
-
-    // parse_response(example_request,start_line,host_line);
-    parse_file(file_path,start_line,host_line);
-
+    run(argv[1]);
     return 0;
 }
 
