@@ -5,12 +5,15 @@ int parse_file(char *file_path,char *start_line, char *host_line, int *status_co
 
     uint8_t request_type = parse_start_line(start_line,file_path);
 
-    if(request_type == GET && get_payload(file_path,host_name,host_line) == 0) {
+    uint8_t sla = request_type == GET && get_payload(file_path,host_name,host_line) == 0;
+
+    if(sla) {
         char *tmp = strdup(SOURCE_PATH);
         strcat(tmp,file_path);
         strcpy(file_path,tmp);
-
-        free(tmp);        
+        if("%d\n",file_path[strlen(file_path) - 1] == '/'){
+            strcat(file_path,"index.html");
+        }
         return 0;
     } else if (request_type == HEAD) {
         printf("HEAD REQUEST\n");
@@ -43,7 +46,7 @@ enum REQUEST_TYPE parse_start_line(char* start_line,char* file_path) {
     int j = 0;
     while(arr[j] != NULL) j++;
 
-    if(strcmp(arr[2],HTTP_VERSION) != 0) return ERROR;
+    // if(strcmp(arr[2],HTTP_VERSION) != 0) return ERROR;
 
     if((j != 3 && j != 2)) return ERROR;
     if(strcmp(arr[0],"HEAD") == 0 || j == 2) return HEAD;
@@ -66,8 +69,18 @@ uint8_t get_payload(char *file_path,char *host_name,char *host_line) {
     return 0;
 }
 
+bool prefix(const char *pre, const char *str)
+{
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
+
 void get_host_name(char *host_line,char *host_name) {
-    strcpy(host_name,strchr(strtok(host_line,"\n"),':') + 2);
+    char *semi_host = strchr(strtok(host_line,"\n"),':') + 2;
+    if(prefix("www",semi_host)){
+        semi_host = semi_host + 4;
+    }
+    strtok(semi_host,".");
+    strcpy(host_name,semi_host);
 }
 
 uint8_t absolute_path(char *file_path) {

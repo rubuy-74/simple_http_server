@@ -73,13 +73,31 @@ void concat(char *dest, char *source) {
 
 }
 
+const char *file_suffix(const char path[])
+{
+    const char *result;
+    int i, n;
+
+    assert(path != NULL);
+    n = strlen(path);
+    i = n - 1;
+    while ((i > 0) && (path[i] != '.') && (path[i] != '/') && (path[i] != '\\')) {
+        i--;
+    }
+    if ((i > 0) && (i < n - 1) && (path[i] == '.') && (path[i - 1] != '/') && (path[i - 1] != '\\')) {
+        result = path + i;
+    } else {
+        result = path + n;
+    }
+    return result;
+}
+
 const char * get_mime_type(char *filename) {
    uint8_t i;
    uint8_t n;
    static const char default_mimeType[] = "application/octet-stream";
 
-   char *extension = (char *)malloc(32 * sizeof(char));
-   extension = strchr(filename,'.');
+   char *extension = file_suffix(filename);
 
    for(i = 0; i < sizeof(mimeTypeList) / sizeof(mimeTypeList[0]); i++) {
       if(strcmp(mimeTypeList[i].extension,extension) == 0) {
@@ -100,16 +118,15 @@ int create_response(int new_socket,char *path_file,int status_code, char *respon
         status_code = 404;
     }
     create_header(status_code,path_file,response);
-    if(f > 0) {
-        fseek(f,0,SEEK_END);
-        length = ftell(f);
-        fseek(f,0,SEEK_SET);
-        data = (char *) malloc(length);
+        if(f > 0) {
+            fseek(f,0,SEEK_END);
+            length = ftell(f);
+            fseek(f,0,SEEK_SET);
+            data = (char *) malloc(length);
         if(data) {
             fread(data,1,length,f);
         }
         fclose(f);
-
         concat(response,data);
     }
     *response_size += strlen(response);

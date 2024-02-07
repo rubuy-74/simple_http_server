@@ -42,11 +42,11 @@ void handler(int new_socket) {
 
     parse_request(raw_request, start_line, host_line, fields,fields_size);
 
-    printf("%s\n%s\n",start_line,host_line);
-
     parse_file(file_path,start_line,host_line,&status_code);
 
     create_response(new_socket,file_path,status_code,response,&response_size);
+
+    send(new_socket,response,response_size,0);
 }
 
 void *get_in_addr(struct sockaddr *sa) {

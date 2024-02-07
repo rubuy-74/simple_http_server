@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <assert.h>
 #include <stdint.h>
 
 #define BUFFERSIZE 1024
